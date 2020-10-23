@@ -79,6 +79,11 @@ public class JwtAuthorizationInfoMemory implements AuthorizationInfoMemory {
     }
 
     @Override
+    public void remove(String key) {
+
+    }
+
+    @Override
     public Optional<AuthorizationInfo> get(String key) {
         return this.parse(key)
                 .map(claims -> {
