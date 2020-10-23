@@ -5,8 +5,8 @@ import com.google.gson.reflect.TypeToken;
 import io.jsonwebtoken.*;
 import org.springframework.util.DigestUtils;
 import tech.guyi.web.quick.permission.authorization.AuthorizationInfo;
-import tech.guyi.web.quick.permission.authorization.configuration.AuthorizationConfiguration;
 import tech.guyi.web.quick.permission.authorization.memory.AuthorizationInfoMemory;
+import tech.guyi.web.quick.permission.configuration.PermissionConfiguration;
 
 import javax.annotation.Resource;
 import javax.crypto.SecretKey;
@@ -20,7 +20,7 @@ public class JwtAuthorizationInfoMemory implements AuthorizationInfoMemory {
     private final Gson gson = new Gson();
 
     @Resource
-    private AuthorizationConfiguration authorizationConfiguration;
+    private PermissionConfiguration permissionConfiguration;
     @Resource
     private JwtAuthorizationConfiguration configuration;
 
@@ -47,15 +47,15 @@ public class JwtAuthorizationInfoMemory implements AuthorizationInfoMemory {
         long now = System.currentTimeMillis();
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
         SecretKey key = generalKey();
-        body.put("timeout",now + authorizationConfiguration.getTimeout());
+        body.put("timeout",now + permissionConfiguration.getAuthorization().getTimeout());
         JwtBuilder builder = Jwts.builder()
                 .setId(DigestUtils.md5DigestAsHex(String.valueOf(now).getBytes()))
                 .setIssuedAt(new Date(now))
                 .setIssuer(configuration.getIssUser())
                 .signWith(signatureAlgorithm, key)
                 .setClaims(body);
-        if (authorizationConfiguration.getTimeout() != -1){
-            builder.setExpiration(new Date(now + authorizationConfiguration.getTimeout()));
+        if (permissionConfiguration.getAuthorization().getTimeout() != -1){
+            builder.setExpiration(new Date(now + permissionConfiguration.getAuthorization().getTimeout()));
         }
         return builder;
     }
@@ -106,7 +106,7 @@ public class JwtAuthorizationInfoMemory implements AuthorizationInfoMemory {
                     .map(Object::toString)
                     .map(Long::valueOf)
                     .orElse(now);
-            if ((timeout - now) < (authorizationConfiguration.getTimeout() * 0.5)){
+            if ((timeout - now) < (permissionConfiguration.getAuthorization().getTimeout() * 0.5)){
                 return this.getJwtBuilder(claims).compact();
             }
             return key;
